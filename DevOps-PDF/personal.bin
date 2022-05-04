@@ -1,0 +1,190 @@
+ Udemy credentials:
+ udemy.com
+aviral.bajpai@powerweave.com
+power@123
+---------------------------------------------
+bitbucket credentials:
+vinoddega
+passwd Vinod@102
+
+----------------------------------------------
+aws credentials :
+https://342286582958.signin.aws.amazon.com
+vinod_dega: username
+Vinod@102: passwd
+scanner img
+
+****************************************************************************************************************************
+ALPHA PROJECT CLONE IN REACT :
+
+for deployments :
+/Users/admin/PROJECT/ALPHA/rype_spa
+
+git branch
+    @@@@ alpha_removed_gcp
+git log
+git pull
+git log
+sudo npm install
+sudo npm run build
+########################### UPLOAD ARTIFACTS START ###################
+aws s3 cp build/ s3://rype.alpha.web/ --recursive
+#######  UPLOAD DONE ########
+####### MAKE PUBLIC START ###########
+s3cmd setacl s3://rype.alpha.web/**/* --acl-public
+s3cmd setacl s3://rype.alpha.web/* --acl-public
+####### MAKE PUBIC DONE #########
+####### INVALIDATION CREATION STARTS ######
+#aws configure
+aws configure set preview.cloudfront true
+aws configure set preview.create-invalidation true
+aws cloudfront create-invalidation --distribution-id E1ZS0DVNE5U42E --paths "/*"
+####### INVALIDATION CREATION DONE ##########
+
+****************************************************************************************************************************
+for truedata start:
+/Users/admin/Downloads
+
+ssh -i dataingestion_python.pem ubuntu@3.110.235.158
+data-python-new
+i-0fc2197c3f8c3a0a2
+
+***************************************************************************************************************************
+shell scripit :
+write a shell scripit to check npm install (or) npm install aws-sdk (or) npm --v . if the scripit is correct then proced to next command(step) otherwise the scripit can generate the some Eorrors(ERR) ,Then the scripit will stop.
+
+#!/bin/bash
+#npm install aws-sdk  2>&1 | tee tognpm1.txt
+npm install 2>&1 | tee tognpm1.txt 
+grep "ERR" tognpm1.txt
+a=$?
+if [ "$a" -ne 0 ]
+then
+	echo "npm is installed"
+else
+	echo "npm is not installed"
+	exit
+fi
+date
+npm run build
+
+******************************************************************************************************************************
+
+write a Dockerfile to run the npm install and npm start , by taking the node as version 12. 
+
+FROM node:12
+RUN mkdir /app
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+EXPOSE 3000
+COPY . .
+CMD ["npm", "start"]
+
+docker build -t vinoskumar102/mynode:12
+
+####to run docker images as container### 
+
+docker run -it --name npm -p 8080:3000 vinodkumar102/myname:12 /bin/bash
+
+**********************************************************************************************************************************
+How To Use Linux Screen
+
+RMD for screen command:
+Have you ever faced the situation where you perform a long-running task on a remote machine, and suddenly your connection drops, the SSH session is terminated, and your work is lost. Well, it has happened to all of us at some point, hasn’t it? Luckily, there is a utility called screen that allows us to resume the sessions.
+
+Introduction #
+Screen or GNU Screen is a terminal multiplexer. In other words, it means that you can start a screen session and then open any number of windows (virtual terminals) inside that session. Processes running in Screen will continue to run when their window is not visible even if you get disconnected.
+
+
+When you have more than 1 screen session, you need to type the screen session ID. Use screen -ls to see how many screens are available.
+Named sessions are useful when you run multiple screen sessions. To create a named session, run the screen command with the following arguments:
+
+Named sessions are useful when you run multiple screen sessions. To create a named session, run the screen command with the following arguments:
+
+screen -S session_name
+Copy
+It’s always a good idea to choose a descriptive session name.
+
+
+ screen -ls
+ 
+ screen -r number
+To create a new window with shell type Ctrl+a c, the first available number from the range 0...9 will be assigned to it.
+
+Ctrl+a Q Close all regions but the current one.
+Ctrl+a X Close the current region.
+##########Detach from Linux Screen Session
+You can detach from the screen session at any time by typing:
+
+Ctrl+a d
+
+
+vinod@vinod-Lenovo-G580:~$ systemctl is-active --quiet docker && echo Service is running
+Service is running
+vinod@vinod-Lenovo-G580:~$ systemctl is-active --quiet kafka && echo Service is running
+vinod@vinod-Lenovo-G580:~$ $?
+3: command not found
+
+
+*************************************
+systemctl is-active --quiet service
+will exit with status zero if service is active, non-zero otherwise, making it ideal for scripts:
+
+systemctl is-active --quiet service && echo Service is running
+
+                        \\\\\\
+ This will check if the service is down and perform service restart
+
+systemctl is-active --quiet <service name> || <service name> restart
+the || there checks if the return value from systemctl is non-zero meaning if it's not active as explained by the author.
+
+*************************************
+
+Starting and stopping Docker Service
+Docker Service on Windows can be started by using the following command:
+
+    Start-Service docker
+Docker Service can be stopped by running the following command:
+
+    Stop-Service docker
+                 
+                 
+                 **********************
+$sudo systemctl stop docker
+$sudo service docker stop 
+    
+    
+
+https://developpaper.com/using-shell-script-to-start-and-stop-docker-service-in-batch/
+
+
+###########################################**************************#####################################################
+
+create an ubuntu t2.micro instance in us-east-1 region, add 8GB initially. and make sure that u able to add more volume to that machine
+
+---> First create a ubuntu EC2 instance with t2.micro and save the key pair in your machine .
+---> convert that .pem key file into .ppk file by using puttygen
+---> after that create 20GB volume and attach to that machine 
+---> and to login to that machine by using .ppk file 
+---> after check
+df -f
+sudo lsblk
+file -s /dev/xvdf
+df -h
+sudo mkfs -t xfs /dev/xvdf
+file -s /dev/xvdf
+mkdir apps/my-data
+cd /apps/my-data
+mkdir -p apps/volume/new-volume
+then finally mount it 
+mount /dev/xvdf /apps/volume/new-volume
+ df -h
+
+
+
+unmount /dev/nvme1n1 volume/new-volume
+dockerfile 
+txt.
+
+

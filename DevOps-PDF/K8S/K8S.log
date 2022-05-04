@@ -1,0 +1,375 @@
+Note:
+
+1: EACH QUESTION HAS ITS OWN CONTEXT. A command will be provided, in the beninging :P of each question, to change the context. DO NOT FORGET.
+2: Below questions may have minor changes. Not just in names.
+3: DO NOT use Linux systems for the exam. There is plugin compatibility issues with chrome on Linux.
+4: Do not rely on Tab to complete the command as it does not work in the environment.
+5: Make best use of "kubernetes.io" site and the "<command> --help" output while practising.  
+
+
+Ques:
+===========================================
+===========================================
+
+Q1:
+Create a new Cluster Role named DeploymentClusterrole, which only allows to Create
+- Deployment
+- StatefulSet
+- DaemonSet
+
+Create new SeviceAccount named cicd-token in namespace app-team1
+Bind the Clusterrole DeploymentClusterrole to the serviceaccount cicd-token in namespace app-team1
+
+A1:
+student@master1:~$ kubectl create clusterrole deployment-clusterrole --resource=Deployment,StatefulSet,DaemonSet --verb=create
+student@master1:~$ kubectl create serviceaccount cicd-token -n app-teams1
+student@master1:~$ kubectl create clusterrolebinding deployment-cluster --serviceaccount=app-teams1:cicd-token --clusterrole=deployment-clusterrole
+
+===========================================
+===========================================
+
+Q2: 
+Set the node name ek8s-node-0 as unavailable and reschedule all pods running on it.
+
+A2:
+kubectl drain ek8s-node-0 --ignore-daemonsets --delete-local-data
+
+===========================================
+===========================================
+
+Q3:
+Given a Kubernestes cluster running version 1.18.8, upgrade all of the kubernetes control plane and node components on the MASTER node only to version 1.19.0
+You are also expected to upgrade kubelet and kubectl on teh master node.
+Be sure to drain the master node before upgrading it and uncordon it after upgrade. Do not upgrade the worker nodes, etcd, the container manager, the CNI plugin, the DNS service or any other address.
+
+NOTE: You will be on a student-login console. SSH into master node [ssh <nodename>]. Run below commands as root [sudo -i].
+
+A3:
+root@master1:~$ apt-update -y
+root@master1:~$ apt-mark unhold kubeadm && apt-get update && apt-get install -y kubeadm=1.19.0-00 && apt-mark hold kubeadm
+root@master1:~$ apt-get update && apt-get install -y --allow-change-held-packages kubeadm=1.19.0-00
+root@master1:~$ kubeadm version
+root@master1:~$ kubeadm upgrade apply v1.19.0
+root@master1:~$ apt-mark unhold kubelet kubectl && apt-get update && apt-get install -y kubelet=1.19.0-00 kubectl=1.19.0-00 && apt-mark hold kubelet kubectl
+root@master1:~$ apt-get update && apt-get install -y --allow-change-held-packages kubelet=1.19.0-00 kubectl=1.19.0-00
+root@master1:~$ systemctl daemon-reload
+root@master1:~$ systemctl restart kubelet
+root@master1:~$ kubectl get nodes #to confirm the upgrade
+
+===========================================
+===========================================
+
+Q4:
+Create a backup of the existing ETCD cluster and save to <file-path>.
+Next, restore an existing ETCD cluster backup snapshot from <file-path>. Certificates are NOT present at "/etc/kubernetes/pki/etcd".
+Certficate paths will be provided in the question.
+
+A4:
+#student@master1:~$ sudo ETCDCTL_API=3 etcdctl --endpoints https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key snapshot save /tmp/snapshot-pre-boot.db
+
+#student@master1:~$ etcdctl snapshot restore snapshot.db --cacert='/etc/kubernetes/pki/etcd/ca.crt' \
+--cert='/etc/kubernetes/pki/etcd/server.crt' --key='/etc/kubernetes/pki/etcd/server.key' \
+--name=controlplane --initial-advertise-peer-urls="http://localhost:2380" --initial- \
+cluster="controlplane=http://localhost:2380" --initial-cluster-token="etcd-cluster-1" --data- \
+dir='var/lib/etcd/after-bck'
+
+===========================================
+===========================================
+
+Q5:
+Create a new NetworkPolicy named allow-port-namespace that allows Pods in the existing namespace my-app to connect to port 8080 of other pods in the same namespace.
+Ensure that the NetPolicy
+- does not allow access to pods not listening on port 8080
+- does not allow access from pods not in namespace my-app
+
+A5:
+# File definition
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: grras-solution
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+
+#student@master1:~$ kubectl create -f nwpolicy.yaml
+
+* this question has a variation where ingress from different namespace is required to communicate on the same port in current namespace.
+
+===========================================
+===========================================
+
+Q6:
+Configure the existing deployment front-end and add a port specification named http exposing port 80/tcp of existing container nginx.
+Create a new service named front-end-svc exposing container port http. Configure the new service to expose the individual pods via a NodePort on the nodes on which they are acheduled.
+
+A6:
+# student@master1:~$ kubectl edit deployment front-end
+---
+*under spec-->containers add
+ports:
+- conatinerPort: 80
+  name: http
+---
+
+#student@master1:~$ kubectl expose deployment front-end --name=front-end-svc --port=80 --type=NodePort
+
+#to confirm run "kubectl get service front-end-svc"
+
+===========================================
+===========================================
+
+Q7:
+Create a new Nginx ingress resource as follows:
+- Name: ping
+- Namespace: ing-external
+- Exposing service hello on path /hello using service port 5678
+The availability of service hello can be checked using the following command which should return "hello"
+$ curl -kL <internal_ip>/hello
+
+A7:
+#File definition
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ping
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+     paths:
+     - path: /hello
+       pathType: Prefix
+       backend:
+         service:
+           name: hello  #get from "kubectl get svc"
+           port:
+             number: 5678
+---
+
+===========================================
+===========================================
+
+Q8:
+Scale the deployment WebSever to 6 pods
+
+A8:
+kubectl scale deployment front-end --replicas=6
+
+===========================================
+===========================================
+
+Q9:
+Schedule a pod as follows:
+- Name: nginx-kusc00401
+- Image: nginx
+- NodeSelector: disk=spinning
+
+A9:
+#File Definition
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+   run: ngins-kusc00401
+   name: ngins-kusc00401
+spec:
+  containers:
+  - image: nginx
+    name: ngins-kusc00401
+    nodeSelector:
+      disk: spinning
+---
+
+===========================================
+===========================================
+
+Q10:
+Check to see how many nodes are ready [Not including the nodes tainted NoSchedule] and write the number to <file-path>
+
+A10:
+#check nodes which are not ready
+#student@master1:~$ kubectl get nodes -o wide | grep -iv ready
+
+#check number of nodes not tainted NoSchedule
+#kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints[*]}{"\n"}' | awk 'NF' | grep -iv NoSchedule | wc -l
+
+#if all nodes are ready, in first command output, then copy output of above command to the specified file.
+
+===========================================
+===========================================
+
+Q11:
+Create a pod named kucc4 with a single app container for each one of the following images running inside (there may be between 1-4 images specified)
+- nginx
+- busybox
+- redis
+
+A11:
+#File definition
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kucc4
+spec:
+  template:
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+      - name: busybox
+        image: busybox
+      - name: redis
+        image: redis
+---
+
+===========================================
+===========================================
+
+Q12:
+Create a persistentvolume with name app-config of capacity 1Gi and access mode ReadWriteMany. the type of volume is HostPath and its location is /srv/appconfig.
+
+A12:
+#File Definition
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-config
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: /srv/appconfig
+---
+
+===========================================
+===========================================
+
+Q13:
+Create a new persistentvolumeclaim:
+- Name: pv-volume
+- Class: csi-hostpath-sc
+- Capacity: 60Mi
+
+Create a new pod that mounts the PVC as a volume:
+- Name: web-server
+- Image: nginx
+- MountPath: /usr/share/nginx/html
+
+Configure the pod to have ReadWriteOnce access on the volume.
+Once the pod is up, use edit/patch commands to increase the volumeclaim to 70Mi and record it.
+
+A13:
+#File Definition
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pv-volume
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+   requests:
+     storage: 60Mi
+  storageClassName: csi-hostpath-sc
+---
+#kubectl apply -f pvc-file.yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver
+spec:
+  containers:
+  - name: webserver
+    image: nginx
+    volumeMounts:
+    - name: mypd
+      mountPath: "/usr/share/nginx/html"
+    volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: pv-volume
+---
+#kubectl apply -f pod-file.yaml
+
+#Edit pvc-file.yaml file and change 
+---
+  resources:
+   requests:
+     storage: 70Mi
+---
+#kubectl apply -f pvc-file.yaml --record
+
+===========================================
+===========================================
+
+Q14:
+Monitor the logs of pod bar and:
+- Extract log lines correcponding to error unable-to-access-website
+- write them to /opt/log/bar.log
+
+A14:
+#student@master1:~$ kubectl logs bar | grep -i "unable-to-access-website" > /opt/log/bar.log
+
+===========================================
+===========================================
+
+Q15:
+Without changing its existing containers, an existing pod needs to be integrated built-in logging architecture (eg. kubectl logs).
+Adding a streaming side-car container is a good and common way to accomplish this requirement.
+Add a busybox sidecar container to the existing pod legacy-app. The new sidecar container has to run the following command:
+"/bin/sh -c tail -n+1 /var/log/legacy-app.log"
+Use a volume mount named logs to make the file /var/log/legacy-app.log available to the cluster.
+
+A15:
+No answer found yet. Any attempt to add the sidecar conatiner leads to the error "not allowed to add conatiner to pod". Have not tried deleting and recreating the pod.
+
+===========================================
+===========================================
+
+Q16:
+From the pod label name=cpu-loader, find pods running high cpu workloads and write the name of the pod consuming most amount of CPU to the file <file-path> which already exists.
+
+A16:
+#student@master1:~$ kubectl top pod -l name=cpu-loader
+
+===========================================
+===========================================
+
+Q17:
+A kubernetes worker node named wk8s-node-0 is in the state NotReady. Investigate why this is the case, and perform any appropriate steps to bring the node to a Ready state ensuring that changes are made permanent.
+
+A17:
+#student@master1:~$ ssh wk8s-node-0
+#student@master1:~$ systemctl restart kubelet
+#student@master1:~$ systemctl enable kubelet
+
+*please attempt this question with time in hand. Even though above solution works, just make sure it is permanent by checking it again later.
+you can use below commands for more logs
+# service kubelet status
+# journalctl -u kubelet
+
+===========================================
+===========================================
